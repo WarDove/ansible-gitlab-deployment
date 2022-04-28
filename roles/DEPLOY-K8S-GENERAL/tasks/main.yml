@@ -1,0 +1,21 @@
+---
+# tasks file for DEPLOY-K8S-GENERAL
+
+- name: Place generated deployment manifest on entrypoint host
+  copy:
+    src: manifest.yml 
+    dest: "/home/ansible/MANIFESTS/{{ CI_COMMIT_BRANCH }}/{{ URL }}.yml"
+    owner: ansible
+    group: ansible
+    mode: '0644'
+  register: copyresult 
+
+- name: Deploy to Production K8s
+  become: yes
+  command: "kubectl apply -f /home/ansible/MANIFESTS/{{ CI_COMMIT_BRANCH }}/{{ URL }}.yml"
+  when: (copyresult is succeeded) and (CI_COMMIT_BRANCH == 'master')
+
+- name: Deploy to Staging K8s
+  command: "kubectl apply -f /home/ansible/MANIFESTS/{{ CI_COMMIT_BRANCH }}/{{ URL }}.yml"
+  when: (copyresult is succeeded) and (CI_COMMIT_BRANCH == 'dev')
+...

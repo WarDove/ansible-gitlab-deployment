@@ -1,0 +1,5 @@
+---
+# handlers file for DEPLOY-NGINX-CONFIG
+- name: Reload nginx
+  become: yes
+  command: "nginx -s reload"

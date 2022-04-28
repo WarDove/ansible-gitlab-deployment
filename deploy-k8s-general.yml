@@ -1,0 +1,22 @@
+---
+
+- hosts: KUBE_ENTRYPOINT
+  gather_facts: no
+  roles:
+    - DEPLOY-K8S-GENERAL
+
+
+- hosts: TEST_NGINX_SERVER
+  gather_facts: no
+  roles:
+    - role: DEPLOY-NGINX-CONFIG
+      when: CI_COMMIT_BRANCH == "dev"
+
+
+- hosts: PROD_NGINX_SERVER
+  gather_facts: no
+  roles:
+    - role: DEPLOY-NGINX-CONFIG
+      when: CI_COMMIT_BRANCH == "master"
+
+...

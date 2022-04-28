@@ -1,0 +1,14 @@
+---
+# tasks file for DEPLOY-NGINX-CONFIG
+
+- name: Place generated site config on proxy server
+  become: yes
+  copy:
+    src: site.conf
+    dest: "/etc/nginx/sites-available/{{ URL }}.conf"
+    owner: ansible
+    group: ansible
+    mode: '0644'
+  notify:
+    - Reload nginx
+...

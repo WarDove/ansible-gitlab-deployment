@@ -1,0 +1,8 @@
+---
+# defaults file for DEPLOY-K8S-GENERAL
+ansible_user: "{{ lookup('community.hashi_vault.hashi_vault', 'secret=kube/entrypoint:username token=s.O6kDO74PBM4eiEm6TClmf9gX url=http://10.10.15.57:8200') }}"
+ansible_ssh_pass: "{{ lookup('community.hashi_vault.hashi_vault', 'secret=kube/entrypoint:password token=s.O6kDO74PBM4eiEm6TClmf9gX url=http://10.10.15.57:8200') }}"
+ansible_become_password: "{{ ansible_ssh_pass }}"
+
+CI_COMMIT_BRANCH: "{{ lookup('env','CI_COMMIT_BRANCH') }}"
+URL: "{{ lookup('env','URL') }}"

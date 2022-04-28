@@ -1,0 +1,12 @@
+[IIS_SERVER]
+"{{ lookup('env','IIS_SERVER') }}"
+
+[KUBE_ENTRYPOINT]
+"{{ lookup('env','KUBE_ENTRYPOINT') }}"
+
+[NGINX_SERVERS]
+PROD_NGINX_SERVER ansible_host="{{ lookup('env','PROD_NGINX_SERVER') }}"
+TEST_NGINX_SERVER ansible_host="{{ lookup('env','TEST_NGINX_SERVER') }}"
+
+[NGINX_SERVERS:vars]
+CI_COMMIT_BRANCH="{{ lookup('env','CI_COMMIT_BRANCH') }}"

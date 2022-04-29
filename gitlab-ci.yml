@@ -4,7 +4,7 @@ workflow:
     - if: $CI_COMMIT_MESSAGE =~ /fix\(.*\):\ |feat\(.*\):\ |perf\(.*\):\ / || $CI_COMMIT_BRANCH == "master"
 ##################################################################################################################
 variables:
-  FQDN: <SITE_URL>
+  FQDN: opendata-api.rinn.az
   BUILD_FOLDER: dist/
   CI_BUILD_IMAGE: $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA
   BUILD_ARTIFACT_PATH: $CI_BUILDS_DIR/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME/$BUILD_FOLDER

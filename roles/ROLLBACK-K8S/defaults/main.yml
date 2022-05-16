@@ -1,0 +1,11 @@
+---
+# defaults file for ROLLBACK-K8S
+ansible_user: "{{ lookup('community.hashi_vault.hashi_vault', 'secret=kube/entrypoint:username token=s.O6kDO74PBM4eiEm6TClmf9gX url=http://10.10.15.57:8200') }}"
+ansible_ssh_pass: "{{ lookup('community.hashi_vault.hashi_vault', 'secret=kube/entrypoint:password token=s.O6kDO74PBM4eiEm6TClmf9gX url=http://10.10.15.57:8200') }}"
+ansible_become_password: "{{ ansible_ssh_pass }}"
+
+CI_COMMIT_TAG: "{{ lookup('env', 'CI_COMMIT_TAG') }}"
+ROLLBACK: "{{ lookup('env','ROLLBACK') }}"
+CI_BUILD_IMAGE: "{{ lookup('env','CI_BUILD_IMAGE') }}"
+NAMESPACE: "{{ lookup('env','NAMESPACE') }}"
+CI_PROJECT_NAME: "{{ lookup('env','CI_PROJECT_NAME') }}"

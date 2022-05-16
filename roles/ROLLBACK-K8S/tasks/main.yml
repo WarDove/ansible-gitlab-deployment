@@ -4,3 +4,5 @@
 - name: ROLLBACK K8S
   become: yes
   command: "kubectl set image deployment {{ CI_PROJECT_NAME  }} {{ CI_PROJECT_NAME }}={{ CI_BUILD_IMAGE  }} -n {{ NAMESPACE }}"
+
+  ...

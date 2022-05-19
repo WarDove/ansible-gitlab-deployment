@@ -10,3 +10,6 @@ TEST_NGINX_SERVER ansible_host="{{ lookup('env','TEST_NGINX_SERVER') }}"
 
 [NGINX_SERVERS:vars]
 CI_COMMIT_BRANCH="{{ lookup('env','CI_COMMIT_BRANCH') }}"
+
+[LOCALDNS]
+"{{ lookup('env','LOCALDNS') }}"

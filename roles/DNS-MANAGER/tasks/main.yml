@@ -1,0 +1,9 @@
+---
+# tasks file for DNS-MANAGER
+
+- name: DNS MANAGER
+  become: yes
+  command: grep -q {{ URL }} /etc/hosts || echo "{{ NGINX_SERVER }}  {{ URL }}" >> /etc/hosts
+  notify:
+    - Reload dnsmasq
+...

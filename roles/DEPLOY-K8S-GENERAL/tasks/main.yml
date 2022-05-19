@@ -17,5 +17,5 @@
 
 - name: Deploy to Staging K8s
   command: "kubectl apply -f /home/ansible/MANIFESTS/{{ CI_COMMIT_BRANCH }}/{{ URL }}.yml"
-  when: (copyresult is succeeded) and (CI_COMMIT_BRANCH == 'dev')
+  when: (copyresult is succeeded) and (CI_COMMIT_BRANCH != 'master')
 ...

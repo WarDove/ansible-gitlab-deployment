@@ -10,7 +10,7 @@
   gather_facts: no
   roles:
     - role: DEPLOY-NGINX-CONFIG
-      when: CI_COMMIT_BRANCH == "dev"
+      when: CI_COMMIT_BRANCH != "master"
 
 
 - hosts: PROD_NGINX_SERVER

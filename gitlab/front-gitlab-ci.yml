@@ -1,0 +1,339 @@
+##################################################################################################################
+workflow:
+  rules:
+    - if: $CI_COMMIT_MESSAGE =~ /fix\(.*\):\ |feat\(.*\):\ |perf\(.*\):\ / || $CI_COMMIT_BRANCH != "dev" 
+##################################################################################################################
+variables:
+  FQDN: portal.rinn.az
+  BUILD_FOLDER: dist/
+  CI_BUILD_IMAGE: $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA
+  BUILD_ARTIFACT_PATH: $CI_BUILDS_DIR/$CI_PROJECT_NAMESPACE/$CI_PROJECT_NAME/$BUILD_FOLDER
+##################################################################################################################
+stages:
+  - build
+  - release
+  - containerize
+  - deploy
+  - test
+  - rollback
+##################################################################################################################
+before_script:
+  - echo $GITLAB_TOKEN
+  - echo $GITHUB_TOKEN
+  - echo "CURRENT LOCATION - $PWD"
+  - echo "FULL ARTIFACT PATH - $BUILD_ARTIFACT_PATH"
+  - echo "SYSTEM INFO:"
+  - cat /etc/os-release
+  - cat /etc/hostname
+##################################################################################################################
+image: mcr.microsoft.com/dotnet/sdk:6.0-alpine3.14
+##################################################################################################################
+
+##################################################################################################################
+BUILD:
+
+  stage: build
+
+  rules:
+   - if: $IIS_DEPLOYMENT
+  
+  before_script:
+    - |-
+        if [ ${CI_COMMIT_BRANCH} == master ]; then
+          sed -i s/"http:\/\/dev-"/"https:\/\/"/g .env
+        elif [ ${CI_COMMIT_BRANCH} == staging ]; then
+          sed -i s/"http:\/\/dev"/"https:\/\/pre"/g .env
+        fi
+
+  script:
+    - cd erabita.billing.api/
+    - dotnet publish -c Release -o $BUILD_ARTIFACT_PATH
+
+  artifacts:
+    paths:
+      - $BUILD_FOLDER
+
+  #only:
+  #  - master
+  #  - dev
+##################################################################################################################
+
+##################################################################################################################
+RELEASE:
+
+  image: node:17-alpine3.12
+
+  stage: release
+
+  cache:
+    key: ${CI_COMMIT_REF_SLUG}-ReleaseModules
+
+    paths:
+      - node_modules/
+
+  script:
+    - apk add git
+    - npm install @semantic-release/gitlab @semantic-release/exec
+    - npx semantic-release --generate-notes false --dry-run
+    - npx semantic-release
+
+  artifacts:
+    paths:
+      - VERSION.txt
+
+  only:
+    - dev
+    - staging
+    - master
+    - /^(([0-9]+)\.)?([0-9]+)\.x/
+    - /^([0-9]+)\.([0-9]+)\.([0-9]+)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+[0-9A-Za-z-]+)?$/
+##################################################################################################################
+
+##################################################################################################################
+DEPLOY DEV IIS:
+
+  stage: deploy
+
+  rules:
+    - if: $IIS_DEPLOYMENT
+
+  image: wardove/deployment-ansible:1.0.14
+
+  variables:
+    URL: dev-${FQDN}
+    #########################
+
+    IIS_SERVER: $IIS_SERVER_TEST
+    POOL_NAME: $URL
+    WEB_HOSTNAME: $URL
+    WEB_NAME: $URL
+    WEB_PATH: $WEB_PATH_ROOT$URL
+
+  script:
+    - cd /ansible
+    - ansible-playbook deploy-iis-general.yml -vvvv
+
+  environment: development
+
+  #only:
+  # - dev
+
+  #when: manual
+##################################################################################################################
+
+##################################################################################################################
+DEPLOY PROD IIS:
+
+  stage: deploy
+
+  rules:
+    - if: $IIS_DEPLOYMENT
+
+  image: wardove/deployment-ansible:1.0.14
+
+  variables:
+    URL: ${FQDN}
+    #########################
+    IIS_SERVER: $IIS_SERVER_PROD
+    POOL_NAME: $URL
+    WEB_HOSTNAME: $URL
+    WEB_NAME: $URL
+    WEB_PATH: $WEB_PATH_ROOT$URL
+
+  script:
+    - cd /ansible
+    - ansible-playbook deploy-iis-general.yml -vvvv
+
+  environment: production
+
+  # only:
+  # - master
+
+  #when: manual
+##################################################################################################################
+
+##################################################################################################################
+CONTAINERIZE:
+
+  image: docker:20.10.11-alpine3.14
+
+  stage: containerize
+  
+  before_script:
+    - |-
+        if [ ${CI_COMMIT_BRANCH} == master ]; then
+          sed -i s/"http:\/\/dev-"/"https:\/\/"/g .env
+        elif [ ${CI_COMMIT_BRANCH} == staging ]; then
+          sed -i s/"http:\/\/dev"/"https:\/\/pre"/g .env
+        fi
+    - if [ -f ./VERSION.txt ]; then export CI_BUILD_IMAGE=${CI_REGISTRY_IMAGE}:v$(cat VERSION.txt); fi
+
+  script:
+    - if [ ${CI_COMMIT_BRANCH} != dev ]; then cat .env; fi
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker build -t $CI_BUILD_IMAGE  .
+    - docker push $CI_BUILD_IMAGE
+
+  only:
+    - dev
+    - staging
+    - master
+##################################################################################################################
+
+##################################################################################################################
+DEPLOY DEV K8S:
+
+  stage: deploy
+
+  image: wardove/deployment-ansible:1.0.14
+
+  variables:
+    URL: dev-${FQDN}
+
+  before_script:
+    - |-
+        if [ -f ./VERSION.txt ]; then
+          export BUILD_IMAGE=${CI_REGISTRY_IMAGE}:v$(cat VERSION.txt)
+        else
+          export BUILD_IMAGE=${CI_BUILD_IMAGE}
+        fi
+
+  script:
+    - export NAMESPACE=dev-$(echo $CI_PROJECT_NAME | awk -F- '{print $1}')
+    - envsubst < ${MANIFEST} | cat > /ansible/roles/DEPLOY-K8S-GENERAL/files/manifest.yml
+    - cat $TEST_NGINX_CONFIG > /ansible/roles/DEPLOY-NGINX-CONFIG/files/site.conf
+    - cd /ansible && ansible-playbook deploy-k8s-general.yml -vvvv
+
+  environment: development
+
+  only:
+    - dev
+##################################################################################################################
+
+##################################################################################################################
+DEPLOY STAGING K8S:
+
+  stage: deploy
+
+  image: wardove/deployment-ansible:1.0.14
+
+  variables:
+    URL: pre-${FQDN}
+
+  before_script:
+    - |-
+        if [ -f ./VERSION.txt ]; then
+          export BUILD_IMAGE=${CI_REGISTRY_IMAGE}:v$(cat VERSION.txt)
+        else
+          export BUILD_IMAGE=${CI_BUILD_IMAGE}
+        fi
+
+  script:
+    - export NAMESPACE=pre-$(echo $CI_PROJECT_NAME | awk -F- '{print $1}')
+    - envsubst < ${MANIFEST} | cat > /ansible/roles/DEPLOY-K8S-GENERAL/files/manifest.yml
+    - cat $TEST_NGINX_CONFIG > /ansible/roles/DEPLOY-NGINX-CONFIG/files/site.conf
+    - cd /ansible && ansible-playbook deploy-k8s-general.yml -vvvv
+
+  environment: staging
+
+  only:
+    - staging
+##################################################################################################################
+
+##################################################################################################################
+DEPLOY PROD K8S:
+
+  stage: deploy
+
+  image: wardove/deployment-ansible:1.0.14
+
+  variables:
+    URL: ${FQDN}
+
+  before_script:
+    - |-
+        if [ -f ./VERSION.txt ]; then
+          export BUILD_IMAGE=${CI_REGISTRY_IMAGE}:v$(cat VERSION.txt)
+        else
+          export BUILD_IMAGE=${CI_BUILD_IMAGE}
+        fi
+
+  script:
+    - export NAMESPACE=$(echo $CI_PROJECT_NAME | awk -F- '{print $1}')
+    - envsubst < ${MANIFEST} | cat > /ansible/roles/DEPLOY-K8S-GENERAL/files/manifest.yml
+    - cat /ansible/roles/DEPLOY-K8S-GENERAL/files/manifest.yml
+    - cat $PROD_NGINX_CONFIG > /ansible/roles/DEPLOY-NGINX-CONFIG/files/site.conf
+    - cd /ansible && ansible-playbook deploy-k8s-general.yml -vvvv
+
+  environment: production
+
+  only:
+    - master
+##################################################################################################################
+
+##################################################################################################################
+GUI TEST:
+  stage: test
+
+  rules:
+    - if: $TEST_ENABLED && $CI_COMMIT_BRANCH == "dev" || $CI_COMMIT_BRANCH == "test"
+
+  variables:
+    GIT_STRATEGY: none
+
+  image: ianwalter/puppeteer:v4.0.0
+
+  cache:
+    when: always
+    key: ${CI_COMMIT_REF_SLUG}-TestModules
+    paths:
+      - webdriver/node_modules
+
+
+
+  before_script:
+    - if [ ${CI_COMMIT_BRANCH} == test ];
+        then git init;
+        git remote add origin  http://gitlab-ci-token:${CI_JOB_TOKEN}@gitlab.rabita.az/$CI_PROJECT_PATH;
+        git config core.sparsecheckout true;
+        echo "webdriver/" >> .git/info/sparse-checkout;
+        git pull origin test;
+        ls -l;
+      fi
+
+    - echo "$IIS_SERVER_TEST     $WEB_HOSTNAME" >> /etc/hosts
+    - ping -c 4 $WEB_HOSTNAME
+
+  script:
+    - cd webdriver/
+    - npm install
+    - npx wdio 2>&1 | tee testlog.txt || FAILED=true;
+      if [ $FAILED ]; then exit 100; fi
+
+  allow_failure:
+    exit_codes: 100
+
+  artifacts:
+    when: always
+    paths:
+      - webdriver/testlog.txt
+##################################################################################################################
+
+##################################################################################################################
+ROLLBACK:
+
+  stage: rollback
+
+  rules:
+    - if: $CI_COMMIT_TAG && $ROLLBACK
+
+  image: wardove/ansible-kube-ubuntu20.04:2.0.1
+
+  variables:
+    CI_BUILD_IMAGE: $CI_REGISTRY_IMAGE:$CI_COMMIT_TAG
+
+  script:
+    - ansible-playbook /ansible/deploy.yml -i /ansible/hosts -vvvv
+
+  environment: production
+##################################################################################################################

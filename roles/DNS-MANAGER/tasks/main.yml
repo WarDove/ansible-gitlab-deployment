@@ -3,7 +3,7 @@
 
 - name: DNS MANAGER
   become: yes
-  command: grep -q {{ URL }} /etc/hosts || sh -c  "echo '{{ NGINX_SERVER }}  {{ URL }}' >> /etc/hosts"
+  command: grep {{ URL }} /etc/hosts || sh -c  "echo '{{ NGINX_SERVER }}  {{ URL }}' >> /etc/hosts"
   notify:
     - Reload dnsmasq
 ...

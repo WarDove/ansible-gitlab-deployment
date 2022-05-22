@@ -6,5 +6,5 @@ ansible_ssh_pass: "{{ lookup('community.hashi_vault.hashi_vault', 'secret=dns/dn
 ansible_become_password: "{{ ansible_ssh_pass }}"
 
 URL: "{{ lookup('env','URL') }}"
-NGINX_SERVER: "{{ lookup('env','NGINX_SERVER') }}"
+WEBSERVER: "{{ lookup('env','WEBSERVER') }}"
 ...

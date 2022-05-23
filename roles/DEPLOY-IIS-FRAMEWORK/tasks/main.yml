@@ -23,7 +23,7 @@
 
 - name: Pull the repo to local IIS
   win_git:
-    repo: "{{ WEB_NAME }}"
+    repo: "{{ CI_REPOSITORY_URL }}"
     dest: "{{ SRC_APP_PATH }}"
     branch: master
     update: no

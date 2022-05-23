@@ -1,11 +1,6 @@
 # tasks file for DEPLOY-IIS-FRAMEWORK
 
 ---
-- name: .NET CORE APPLICATION IIS SERVER DEPLOYMENT
-  hosts: "{{ IIS_SERVER }}"
-  gather_facts: no
-  tasks:
-
 - name: Creating website folder on IIS
   ansible.windows.win_file:
     path: "{{ WEB_PATH }}"

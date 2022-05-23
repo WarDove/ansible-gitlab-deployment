@@ -13,8 +13,6 @@ RUN apt clean && \
 
 RUN mkdir /ansible
 
-RUN ansible-galaxy collection install community.windows
-
 WORKDIR /ansible
 
 COPY . .

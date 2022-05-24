@@ -41,7 +41,7 @@
     chdir: "{{ ansible_env.TEMP }}\\git"
 
 - name: Execute MsBuild and publish to destination WEB_PATH for IIS
-  ansible.windows.win_command: msbuild  /p:DeployOnBuild=true /p:PublishProfile={{ ansible_env.TEMP }}\\git\\iisdeploy.pubxml
+  ansible.windows.win_command: msbuild  /p:DeployOnBuild=true /p:Configuration={{ BUILD_CONFIG }} /p:PublishProfile={{ ansible_env.TEMP }}\\git\\iisdeploy.pubxml
   args:
     chdir: "{{ ansible_env.TEMP }}\\git"
   notify: 

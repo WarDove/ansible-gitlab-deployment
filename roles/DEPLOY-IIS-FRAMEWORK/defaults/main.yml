@@ -18,4 +18,5 @@ WEB_IP: "{{ lookup('env','WEB_IP') }}"
 WEB_HOSTNAME: "{{ lookup('env','WEB_HOSTNAME') }}"
 BUILD_ARTIFACT_PATH: "{{ lookup('env','BUILD_ARTIFACT_PATH') }}"
 SRC_APP_PATH: "{{ lookup('env','SRC_APP_PATH') }}"
+CI_REPOSITORY_URL: "{{ lookup('env','CI_REPOSITORY_URL') }}"
 ...

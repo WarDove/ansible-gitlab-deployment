@@ -1,6 +1,6 @@
 ---
 - hosts: IIS_SERVER
-  gather_facts: yes
+  gather_facts: no
   vars:
     VAULT_KV_NAME: "{{ lookup('env','IIS_SERVER') }}"
     ansible_winrm_scheme: http
@@ -16,7 +16,7 @@
     WEB_IP: "{{ lookup('env','WEB_IP') }}"
     WEB_HOSTNAME: "{{ lookup('env','WEB_HOSTNAME') }}"
     BUILD_ARTIFACT_PATH: "{{ lookup('env','BUILD_ARTIFACT_PATH') }}"
-    # SRC_APP_PATH: "{{ lookup('env','SRC_APP_PATH') }}"
+    SRC_APP_PATH: "{{ lookup('env','SRC_APP_PATH') }}"
  
   tasks:
 
@@ -41,12 +41,11 @@
         physical_path: "{{ lookup('env','WEB_PATH') }}"
 
     - name: Pull the repo to local IIS
-      ignore_errors: yes
       win_git:
         repo: "{{ lookup('env','CI_REPOSITORY_URL') }}"
-        dest: "{{ ansible_env.TEMP }}\\git" 
-        branch: "{{ lookup('env','CI_COMMIT_BRANCH') }}"
-        update: yes 
+        dest: "{{ lookup('env','SRC_APP_PATH') }}"
+        branch: master
+        update: yes
         recursive: yes
         replace_dest: yes
         accept_hostkey: yes
@@ -54,17 +53,17 @@
     - name: Place Publish Profile for IIS deployment
       win_template:
         src: templates/pubxml.j2
-        dest: "{{ ansible_env.TEMP }}\\git\\iisdeploy.pubxml"
+        dest: "{{ lookup('env','SRC_APP_PATH') }}\\iisdeploy.pubxml"
 
     - name: Execute Nuget and download packages from packages.config file
       ansible.windows.win_command: nuget restore
       args:
-        chdir: "{{ ansible_env.TEMP }}\\git"
+        chdir: "{{ lookup('env','SRC_APP_PATH') }}"
     
     - name: Execute MsBuild and publish to destination WEB_PATH for IIS
-      ansible.windows.win_command: msbuild  /p:DeployOnBuild=true /p:PublishProfile={{ ansible_env.TEMP }}\\git\\iisdeploy.pubxml
+      ansible.windows.win_command: msbuild  /p:DeployOnBuild=true /p:PublishProfile={{ lookup('env','SRC_APP_PATH') }}\\iisdeploy.pubxml
       args:
-        chdir: "{{ ansible_env.TEMP }}\\git"
+        chdir: "{{ lookup('env','SRC_APP_PATH') }}"
 
     - name: Start IIS site
       community.windows.win_iis_website:

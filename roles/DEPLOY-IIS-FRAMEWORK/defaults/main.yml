@@ -17,4 +17,5 @@ CI_REPOSITORY_URL: "{{ lookup('env','CI_REPOSITORY_URL') }}"
 GIT_DESTINATION: "{{ ansible_env.TEMP }}\\git"
 GIT_DESTINATION_PUB: "{{ ansible_env.TEMP }}\\git\\iisdeploy.pubxml"
 CI_COMMIT_BRANCH: "{{ lookup('env','CI_COMMIT_BRANCH') }}"
+BUILD_CONFIG: "{{ lookup('env','BUILD_CONFIG') }}"
 ...

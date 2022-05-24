@@ -1,22 +1,20 @@
 ---
 # defaults file for DEPLOY-IIS-FRAMEWORK
 VAULT_KV_NAME: "{{ lookup('env','IIS_SERVER') }}"
-
 ansible_winrm_scheme: http
 ansible_port: 5985
 ansible_connection: winrm
 ansible_user: "{{ lookup('community.hashi_vault.hashi_vault', 'secret=iis/{{ VAULT_KV_NAME }}:username token=s.O6kDO74PBM4eiEm6TClmf9gX url=http://10.10.15.57:8200') }}"
 ansible_password: "{{ lookup('community.hashi_vault.hashi_vault', 'secret=iis/{{ VAULT_KV_NAME }}:password token=s.O6kDO74PBM4eiEm6TClmf9gX url=http://10.10.15.57:8200') }}"
 ansible_winrm_transport: ntlm
-
-
 WEB_PATH: "{{ lookup('env','WEB_PATH') }}"
 POOL_NAME: "{{ lookup('env','POOL_NAME') }}"
 WEB_NAME: "{{ lookup('env','WEB_NAME') }}"
 WEB_PORT: "{{ lookup('env','WEB_PORT') }}"
 WEB_IP: "{{ lookup('env','WEB_IP') }}"
 WEB_HOSTNAME: "{{ lookup('env','WEB_HOSTNAME') }}"
-BUILD_ARTIFACT_PATH: "{{ lookup('env','BUILD_ARTIFACT_PATH') }}"
-SRC_APP_PATH: "{{ lookup('env','SRC_APP_PATH') }}"
 CI_REPOSITORY_URL: "{{ lookup('env','CI_REPOSITORY_URL') }}"
+GIT_DESTINATION: "{{ ansible_env.TEMP }}\\git"
+GIT_DESTINATION_PUB: "{{ ansible_env.TEMP }}\\git\\iisdeploy.pubxml"
+CI_COMMIT_BRANCH: "{{ lookup('env','CI_COMMIT_BRANCH') }}"
 ...

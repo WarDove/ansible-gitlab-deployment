@@ -1,2 +1,8 @@
 ---
 # handlers file for DEPLOY-IIS-FRAMEWORK
+
+- name: Start IIS site
+  community.windows.win_iis_website:
+    name: "{{ lookup('env','WEB_NAME') }}"
+    state: started
+  register: website

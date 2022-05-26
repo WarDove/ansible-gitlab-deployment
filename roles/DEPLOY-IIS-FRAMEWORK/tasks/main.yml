@@ -33,17 +33,17 @@
 - name: Place Publish Profile for IIS deployment
   win_template:
     src: pubxml.j2
-    dest: "{{ ansible_env.TEMP }}\\git\\iisdeploy.pubxml"
+    dest: "{{ GIT_DESTINATION }}\\iisdeploy.pubxml"
 
 - name: Execute Nuget and download packages from packages.config file
   ansible.windows.win_command: nuget restore
   args:
-    chdir: "{{ ansible_env.TEMP }}\\git"
+    chdir: "{{ GIT_DESTINATION }}"
 
 - name: Execute MsBuild and publish to destination WEB_PATH for IIS
-  ansible.windows.win_command: msbuild  /p:DeployOnBuild=true /p:Configuration={{ BUILD_CONFIG }} /p:PublishProfile={{ ansible_env.TEMP }}\\git\\iisdeploy.pubxml
+  ansible.windows.win_command: msbuild  /p:DeployOnBuild=true /p:Configuration={{ BUILD_CONFIG }} /p:PublishProfile={{ GIT_DESTINATION }}\\iisdeploy.pubxml
   args:
-    chdir: "{{ ansible_env.TEMP }}\\git"
+    chdir: "{{ GIT_DESTINATION }}"
   notify: 
     - Start IIS site
 

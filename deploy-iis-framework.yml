@@ -1,0 +1,6 @@
+---
+- hosts: IIS_SERVER
+  gather_facts: yes
+  roles:
+    - DEPLOY-IIS-FRAMEWORK
+...

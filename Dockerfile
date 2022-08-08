@@ -19,4 +19,7 @@ COPY . .
 
 ENV ANSIBLE_HOST_KEY_CHECKING=False
 
+RUN mkdir -p  /usr/share/ansible/plugins/modules
+RUN mv win_* /usr/share/ansible/plugins/modules
+
 CMD ["ansible", "--version"]

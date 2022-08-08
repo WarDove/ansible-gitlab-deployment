@@ -14,7 +14,7 @@ WEB_PORT: "{{ lookup('env','WEB_PORT') }}"
 WEB_IP: "{{ lookup('env','WEB_IP') }}"
 WEB_HOSTNAME: "{{ lookup('env','WEB_HOSTNAME') }}"
 CI_REPOSITORY_URL: "{{ lookup('env','CI_REPOSITORY_URL') }}"
-GIT_DESTINATION: "{{ ansible_env.TEMP }}\\git\\{{ lookup('env','URL' }}"
+GIT_DESTINATION: "{{ ansible_env.TEMP }}\\git\\{{ lookup('env','URL') }}"
 CI_COMMIT_BRANCH: "{{ lookup('env','CI_COMMIT_BRANCH') }}"
 BUILD_CONFIG: "{{ lookup('env','BUILD_CONFIG') }}"
 ...

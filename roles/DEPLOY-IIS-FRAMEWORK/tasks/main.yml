@@ -41,7 +41,7 @@
     chdir: "{{ GIT_DESTINATION }}"
 
 - name: Execute MsBuild and publish to destination WEB_PATH for IIS
-  ansible.windows.win_command: msbuild  /p:DeployOnBuild=true /p:Configuration={{ BUILD_CONFIG }} /p:PublishProfile={{ GIT_DESTINATION }}\\iisdeploy.pubxml
+  ansible.windows.win_powershell: cmd /c "msbuild  /p:DeployOnBuild=true /p:Configuration={{ BUILD_CONFIG }} /p:PublishProfile={{ GIT_DESTINATION }}\\iisdeploy.pubxml"
   args:
     chdir: "{{ GIT_DESTINATION }}"
   notify: 
